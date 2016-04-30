@@ -370,6 +370,7 @@ public class HadoopJobExecHelper {
         }
       }
       console.printInfo(output);
+      task.setStatusMessage(output);
       reportTime = System.currentTimeMillis();
     }
 
@@ -387,8 +388,9 @@ public class HadoopJobExecHelper {
     }
 
     if (cpuMsec > 0) {
-      console.printInfo("MapReduce Total cumulative CPU time: "
-          + Utilities.formatMsecToStr(cpuMsec));
+      String status = "MapReduce Total cumulative CPU time: " + Utilities.formatMsecToStr(cpuMsec);
+      console.printInfo(status);
+      task.setStatusMessage(status);
     }
 
     boolean success;

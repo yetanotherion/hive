@@ -516,7 +516,7 @@ public class Driver implements CommandProcessor {
       // get the output schema
       schema = getSchema(sem, conf);
       plan = new QueryPlan(queryStr, sem, perfLogger.getStartTime(PerfLogger.DRIVER_RUN), queryId,
-        SessionState.get().getHiveOperation(), schema, queryDisplay);
+        SessionState.get().getHiveOperation(), schema);
 
       conf.setVar(HiveConf.ConfVars.HIVEQUERYSTRING, queryStr);
 
@@ -1634,7 +1634,7 @@ public class Driver implements CommandProcessor {
           perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.PRE_HOOK + peh.getClass().getName());
         }
       }
-
+      setQueryDisplays(plan.getRootTasks());
       int jobs = Utilities.getMRTasks(plan.getRootTasks()).size()
         + Utilities.getTezTasks(plan.getRootTasks()).size()
         + Utilities.getSparkTasks(plan.getRootTasks()).size();
@@ -1892,6 +1892,15 @@ public class Driver implements CommandProcessor {
     }
 
     return (0);
+  }
+
+  private void setQueryDisplays(List<Task<? extends Serializable>> tasks) {
+    if (tasks != null) {
+      for (Task<? extends Serializable> task : tasks) {
+        task.setQueryDisplay(queryDisplay);
+        setQueryDisplays(task.getDependentTasks());
+      }
+    }
   }
 
   private void releasePlan(QueryPlan plan) {

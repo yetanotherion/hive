@@ -79,6 +79,8 @@ public class QueryDisplay {
     private String name;
     private boolean requireLock;
     private boolean retryIfFail;
+    private String statusMessage;
+
     // required for jackson
     public TaskDisplay() {
 
@@ -155,14 +157,27 @@ public class QueryDisplay {
 
     public synchronized <T extends Serializable> void updateStatus(Task<T> tTask) {
       this.taskState = tTask.getTaskState();
+      setStatusMessage(tTask.getStatusMessage());
       switch(taskState) {
         case RUNNING:
-          beginTime = System.currentTimeMillis();
+          if (beginTime == null) {
+            beginTime = System.currentTimeMillis();
+          }
           break;
         case FINISHED:
-          endTime = System.currentTimeMillis();
+          if (endTime == null) {
+            endTime = System.currentTimeMillis();
+          }
           break;
       }
+    }
+
+    public synchronized String getStatusMessage() {
+      return statusMessage;
+    }
+
+    public synchronized void setStatusMessage(String statusMessage) {
+      this.statusMessage = statusMessage;
     }
   }
   public synchronized void setTaskResult(String taskId, TaskResult result) {
