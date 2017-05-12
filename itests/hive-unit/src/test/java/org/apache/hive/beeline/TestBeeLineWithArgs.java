@@ -277,7 +277,7 @@ public class TestBeeLineWithArgs {
     List<String> argList = getBaseArgs(miniHS2.getBaseJdbcURL());
     testScriptFile( SCRIPT_TEXT, EXPECTED_PATTERN, true, argList);
   }
-  
+
   /**
    * Test Beeline -hivevar option. User can specify --hivevar name=value on Beeline command line.
    * In the script, user should be able to use it in the form of ${name}, which will be substituted with
@@ -349,7 +349,8 @@ public class TestBeeLineWithArgs {
     List<String> argList = getBaseArgs(miniHS2.getBaseJdbcURL());
     final String SCRIPT_TEXT = "CREATE\tTABLE IF NOT EXISTS testTabInScriptFile\n(id\tint);\nSHOW TABLES;";
     final String EXPECTED_PATTERN = "testTabInScriptFile";
-    testScriptFile(SCRIPT_TEXT, EXPECTED_PATTERN, true, argList);
+    testScriptFile(SCRIPT_TEXT, argList, OutStream.ERR, EXPECTED_PATTERN, true);
+    testScriptFile(SCRIPT_TEXT, argList, OutStream.OUT, EXPECTED_PATTERN, false);
   }
 
   @Test
@@ -388,7 +389,7 @@ public class TestBeeLineWithArgs {
   public void testGetVariableValue() throws Throwable {
     final String SCRIPT_TEXT = "set env:TERM;";
     final String EXPECTED_PATTERN = "env:TERM";
-    testScriptFile(SCRIPT_TEXT, EXPECTED_PATTERN, true, getBaseArgs(miniHS2.getBaseJdbcURL()));
+    testScriptFile(SCRIPT_TEXT, getBaseArgs(miniHS2.getBaseJdbcURL()), OutStream.ERR, EXPECTED_PATTERN, true);
   }
 
   /**
@@ -860,8 +861,73 @@ public class TestBeeLineWithArgs {
         "create table reconnecttest (d int);\nshow tables;\n";
     final String EXPECTED_PATTERN = "reconnecttest";
 
-    testScriptFile(SCRIPT_TEXT, EXPECTED_PATTERN, true, argList, true, false);
+    testScriptFile(SCRIPT_TEXT, argList, OutStream.OUT,
+        Collections.singletonList(new Tuple<>(EXPECTED_PATTERN, true)),
+        Collections.singletonList(Modes.SCRIPT));
 
+  }
+
+  /**
+   * Attempt to execute a simple script file with the usage of user & password variables in URL.
+   * Test for presence of an expected pattern
+   * in the output (stdout or stderr), fail if not found
+   * Print PASSED or FAILED
+   */
+  @Test
+  public void testConnectionWithURLParams() throws Throwable {
+    final String EXPECTED_PATTERN = " hivetest ";
+    List<String> argList = new ArrayList<>();
+    argList.add("-d");
+    argList.add(BeeLine.BEELINE_DEFAULT_JDBC_DRIVER);
+    argList.add("-u");
+    argList.add(miniHS2.getBaseJdbcURL() + ";user=hivetest;password=hive");
+    String SCRIPT_TEXT = "select current_user();";
+
+    testScriptFile(SCRIPT_TEXT, argList, EXPECTED_PATTERN, true);
+  }
+
+  /**
+   * Test that Beeline queries don't treat semicolons inside quotations as query-ending characters.
+   */
+  @Test
+  public void testQueryNonEscapedSemiColon() throws Throwable {
+    String SCRIPT_TEXT = "drop table if exists nonEscapedSemiColon;create table nonEscapedSemiColon "
+        + "(key int, value int) ROW FORMAT DELIMITED FIELDS TERMINATED BY ';';show tables;";
+    String EXPECTED_PATTERN = "nonescapedsemicolon";
+    List<String> argList = getBaseArgs(miniHS2.getBaseJdbcURL());
+    testScriptFile(SCRIPT_TEXT, argList, EXPECTED_PATTERN, true);
+    //look for the " nonEscapedSemiColon " in the query text not the table name which comes
+    //in the result
+    EXPECTED_PATTERN = " nonEscapedSemiColon ";
+    testScriptFile(SCRIPT_TEXT, argList, OutStream.ERR, EXPECTED_PATTERN, true);
+    testScriptFile(SCRIPT_TEXT, argList, OutStream.OUT, EXPECTED_PATTERN, false);
+  }
+
+  @Test
+  public void testSelectQueryWithNonEscapedSemiColon() throws Throwable {
+    String SCRIPT_TEXT = "select ';', \"';'\", '\";\"', '\\';', ';\\'', '\\\";', ';\\\"' from " + tableName + ";";
+    final String EXPECTED_PATTERN = ";\t';'\t\";\"\t';\t;'\t\";\t;\"";
+    List<String> argList = getBaseArgs(miniHS2.getBaseJdbcURL());
+    argList.add("--outputformat=tsv2");
+    testScriptFile(SCRIPT_TEXT, argList, EXPECTED_PATTERN, true);
+  }
+
+  /**
+   * Attempt to execute a simple script file with the usage of user & password variables in URL.
+   * Test for presence of an expected pattern
+   * in the output (stdout or stderr), fail if not found
+   * Print PASSED or FAILED
+   */
+  @Test
+  public void testShowDbInPrompt() throws Throwable {
+    final String EXPECTED_PATTERN = " \\(default\\)>";
+    List<String> argList = new ArrayList<>();
+    argList.add("--showDbInPrompt");
+    argList.add("-u");
+    argList.add(miniHS2.getBaseJdbcURL() + ";user=hivetest;password=hive");
+    String SCRIPT_TEXT = "select current_user();";
+
+    testScriptFile(SCRIPT_TEXT, argList, OutStream.ERR, EXPECTED_PATTERN, true);
   }
 
   @Test
