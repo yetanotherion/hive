@@ -984,7 +984,6 @@ public class BeeLine implements Closeable {
     } finally {
       IOUtils.closeStream(initStream);
       consoleReader = null;
-      output("");   // dummy new line
     }
   }
 
