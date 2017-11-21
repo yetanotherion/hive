@@ -34,6 +34,13 @@ public class AbstractOperatorDesc implements OperatorDesc {
     PTFUtils.makeTransient(AbstractOperatorDesc.class, "opProps");
   }
   
+  /**
+   * A map of output column name to input expression map. This is used by
+   * optimizer and built during semantic analysis contains only key elements for
+   * reduce sink and group by op
+   */
+  protected Map<String, ExprNodeDesc> colExprMap;
+
   @Override
   @Explain(skipHeader = true, displayName = "Statistics")
   public Statistics getStatistics() {
@@ -68,5 +75,19 @@ public class AbstractOperatorDesc implements OperatorDesc {
 
   public void setOpProps(Map<String, String> props) {
     this.opProps = props;
+  }
+
+  @Explain(displayName = "columnExprMap", jsonOnly = true)
+  public Map<String, ExprNodeDesc> getColumnExprMapForExplain() {
+    return this.colExprMap;
+  }
+  @Override
+  public Map<String, ExprNodeDesc> getColumnExprMap() {
+    return this.colExprMap;
+  }
+
+  @Override
+  public void setColumnExprMap(Map<String, ExprNodeDesc> colExprMap) {
+    this.colExprMap = colExprMap;
   }
 }
