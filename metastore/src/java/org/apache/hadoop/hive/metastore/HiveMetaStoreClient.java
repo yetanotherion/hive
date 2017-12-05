@@ -27,25 +27,19 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import javax.security.auth.login.LoginException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.common.ObjectPair;
 import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.common.auth.HiveAuthUtils;
@@ -134,12 +128,15 @@ import org.apache.hadoop.hive.metastore.api.UnknownDBException;
 import org.apache.hadoop.hive.metastore.api.UnknownPartitionException;
 import org.apache.hadoop.hive.metastore.api.UnknownTableException;
 import org.apache.hadoop.hive.metastore.api.UnlockRequest;
+import org.apache.hadoop.hive.metastore.hooks.JDOConnectionURLHook;
+import org.apache.hadoop.hive.metastore.hooks.URIResolverHook;
 import org.apache.hadoop.hive.metastore.partition.spec.PartitionSpecProxy;
 import org.apache.hadoop.hive.metastore.txn.TxnHandler;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.hive.thrift.HadoopThriftAuthBridge;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
@@ -167,10 +164,12 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   private boolean isConnected = false;
   private URI metastoreUris[];
   private final HiveMetaHookLoader hookLoader;
+
   protected final HiveConf conf;  // Keep a copy of HiveConf so if Session conf changes, we may need to get a new HMS client.
   private String tokenStrForm;
   private final boolean localMetaStore;
   private final MetaStoreFilterHook filterHook;
+  private final URIResolverHook uriResolverHook;
 
   private Map<String, String> currentMetaVars;
 
@@ -198,6 +197,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
       this.conf = new HiveConf(conf);
     }
     filterHook = loadFilterHooks();
+    uriResolverHook = loadUriResolverHook();
 
     String msUri = conf.getVar(HiveConf.ConfVars.METASTOREURIS);
     localMetaStore = HiveConfUtil.isEmbeddedMetaStore(msUri);
@@ -213,35 +213,43 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
     // get the number retries
     retries = HiveConf.getIntVar(conf, HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES);
     retryDelaySeconds = conf.getTimeVar(
-        ConfVars.METASTORE_CLIENT_CONNECT_RETRY_DELAY, TimeUnit.SECONDS);
+            ConfVars.METASTORE_CLIENT_CONNECT_RETRY_DELAY, TimeUnit.SECONDS);
 
-    // user wants file store based configuration
-    if (conf.getVar(HiveConf.ConfVars.METASTOREURIS) != null) {
-      String metastoreUrisString[] = conf.getVar(
-          HiveConf.ConfVars.METASTOREURIS).split(",");
-      metastoreUris = new URI[metastoreUrisString.length];
-      try {
-        int i = 0;
-        for (String s : metastoreUrisString) {
-          URI tmpUri = new URI(s);
-          if (tmpUri.getScheme() == null) {
-            throw new IllegalArgumentException("URI: " + s
-                + " does not have a scheme");
-          }
-          metastoreUris[i++] = tmpUri;
-
-        }
-      } catch (IllegalArgumentException e) {
-        throw (e);
-      } catch (Exception e) {
-        MetaStoreUtils.logAndThrowMetaException(e);
-      }
-    } else {
-      LOG.error("NOT getting uris from conf");
-      throw new MetaException("MetaStoreURIs not found in conf file");
-    }
+    resolveUris();
     // finally open the store
     open();
+  }
+
+  private void resolveUris() throws MetaException {
+    // user wants file store based configuration
+    String metastoreUrisString[] = conf.getVar(
+            HiveConf.ConfVars.METASTOREURIS).split(",");
+
+    List<URI> metastoreURIArray = new ArrayList<URI>();
+    try {
+      int i = 0;
+      for (String s : metastoreUrisString) {
+        URI tmpUri = new URI(s);
+        if (tmpUri.getScheme() == null) {
+          throw new IllegalArgumentException("URI: " + s
+                  + " does not have a scheme");
+        }
+
+        if (uriResolverHook != null) {
+          metastoreURIArray.addAll(uriResolverHook.resolveURI(tmpUri));
+        } else {
+          metastoreURIArray.add(tmpUri);
+        }
+      }
+      metastoreUris = new URI[metastoreURIArray.size()];
+      for (int j = 0; j < metastoreURIArray.size(); j++) {
+        metastoreUris[j] = metastoreURIArray.get(j);
+      }
+    } catch (IllegalArgumentException e) {
+      throw (e);
+    } catch (Exception e) {
+      MetaStoreUtils.logAndThrowMetaException(e);
+    }
   }
 
   private MetaStoreFilterHook loadFilterHooks() throws IllegalStateException {
@@ -322,6 +330,12 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
           " at the client level.");
     } else {
       close();
+
+      if (uriResolverHook != null) {
+        //for dynamic uris, re-lookup if there are new metastore locations
+        resolveUris();
+      }
+
       // Swap the first element of the metastoreUris[] with a random element from the rest
       // of the array. Rationale being that this method will generally be called when the default
       // connection has died and the default connection is likely to be the first array element.
@@ -2150,5 +2164,25 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
     }
     PartitionsStatsRequest req = new PartitionsStatsRequest(dbName, tblName, colNames, partNames);
     return client.get_aggr_stats_for(req);
+  }
+
+  //multiple clients may initialize the hook at the same time
+  synchronized private URIResolverHook loadUriResolverHook() throws IllegalStateException {
+
+    String uriResolverClassName =
+            conf.get(ConfVars.METASTORE_URI_RESOLVER.toString(), "").trim();
+    LOG.info("Loading uri resolver" + uriResolverClassName);
+    if (uriResolverClassName.equals("")) {
+      return null;
+    } else {
+      try {
+        Class<?> uriResolverClass = Class.forName(uriResolverClassName, true,
+                JavaUtils.getClassLoader());
+        return (URIResolverHook) ReflectionUtils.newInstance(uriResolverClass, null);
+      } catch (Exception e) {
+        LOG.error("Exception loading uri resolver hook" + e);
+        return null;
+      }
+    }
   }
 }
