@@ -385,6 +385,8 @@ public class HiveConf extends Configuration {
 
     METASTORE_FS_HANDLER_THREADS_COUNT("hive.metastore.fshandler.threads", 15,
         "Number of threads to be allocated for metastore handler for fs operations."),
+    METASTORE_URI_RESOLVER("hive.metastore.uri.resolver", "",
+            "If set, fully qualified class name of resolver for hive metastore uri's"),
     METASTORETHRIFTCONNECTIONRETRIES("hive.metastore.connect.retries", 3,
         "Number of retries while opening a connection to metastore"),
     METASTORETHRIFTFAILURERETRIES("hive.metastore.failure.retries", 1,
