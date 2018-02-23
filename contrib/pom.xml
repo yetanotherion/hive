@@ -68,6 +68,17 @@
       <optional>true</optional>
     </dependency>
 
+    <dependency>
+       <groupId>org.apache.httpcomponents</groupId>
+       <artifactId>httpclient</artifactId>
+       <version>${httpcomponents.client.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+      <version>${httpcomponents.core.version}</version>
+    </dependency>
+
     <!-- test inter-project -->
     <dependency>
       <groupId>junit</groupId>
