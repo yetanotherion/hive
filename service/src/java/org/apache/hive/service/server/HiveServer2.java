@@ -29,6 +29,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Strings;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
@@ -503,7 +504,7 @@ public class HiveServer2 extends CompositeService {
     }
   }
 
-  private static void startHiveServer2() throws Throwable {
+  private static void startHiveServer2(CommandLine commandLine) throws Throwable {
     long attempts = 0, maxAttempts = 1;
     while (true) {
       LOG.info("Starting HiveServer2");
@@ -514,6 +515,14 @@ public class HiveServer2 extends CompositeService {
               TimeUnit.MILLISECONDS);
       HiveServer2 server = null;
       try {
+        // Set hiveconf options
+        if (commandLine.hasOption("hiveconf")) {
+          Properties confProps = commandLine.getOptionProperties("hiveconf");
+          for (String propKey : confProps.stringPropertyNames()) {
+            hiveConf.set(propKey, confProps.getProperty(propKey));
+          }
+        }
+
         server = new HiveServer2();
         server.init(hiveConf);
         server.start();
@@ -709,7 +718,7 @@ public class HiveServer2 extends CompositeService {
         System.exit(-1);
       }
       // Default executor, when no option is specified
-      return new ServerOptionsProcessorResponse(new StartOptionExecutor());
+      return new ServerOptionsProcessorResponse(new StartOptionExecutor(commandLine));
     }
 
     StringBuilder getDebugMessage() {
@@ -763,10 +772,16 @@ public class HiveServer2 extends CompositeService {
    * This is the default executor, when no option is specified.
    */
   static class StartOptionExecutor implements ServerOptionsExecutor {
+    private final CommandLine commandLine;
+
+    StartOptionExecutor(CommandLine commandLine) {
+      this.commandLine = commandLine;
+    }
+
     @Override
     public void execute() {
       try {
-        startHiveServer2();
+        startHiveServer2(commandLine);
       } catch (Throwable t) {
         LOG.fatal("Error starting HiveServer2", t);
         System.exit(-1);
