@@ -181,6 +181,9 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
       }
 
       if (isWindowingDistinct()) {
+        if (agg.uniqueObjects == null) {
+          agg.uniqueObjects = new HashSet<ObjectInspectorObject>();
+        }
         HashSet<ObjectInspectorObject> uniqueObjs = agg.uniqueObjects;
         ObjectInspectorObject obj = input instanceof ObjectInspectorObject ?
             (ObjectInspectorObject)input :
@@ -244,7 +247,7 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
       SumAgg<HiveDecimalWritable> bdAgg = (SumAgg<HiveDecimalWritable>) agg;
       bdAgg.empty = true;
       bdAgg.sum = new HiveDecimalWritable(0);
-      bdAgg.uniqueObjects = new HashSet<ObjectInspectorObject>();
+      bdAgg.uniqueObjects = null;
     }
 
     boolean warned = false;
@@ -384,7 +387,7 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
       SumDoubleAgg myagg = (SumDoubleAgg) agg;
       myagg.empty = true;
       myagg.sum = 0.0;
-      myagg.uniqueObjects = new HashSet<ObjectInspectorObject>();
+      myagg.uniqueObjects = null;
     }
 
     boolean warned = false;
@@ -512,7 +515,7 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
       SumLongAgg myagg = (SumLongAgg) agg;
       myagg.empty = true;
       myagg.sum = 0L;
-      myagg.uniqueObjects = new HashSet<ObjectInspectorObject>();
+      myagg.uniqueObjects = null;
     }
 
     private boolean warned = false;
