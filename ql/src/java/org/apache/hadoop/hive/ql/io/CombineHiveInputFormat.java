@@ -116,7 +116,7 @@ public class CombineHiveInputFormat<K extends WritableComparable, V extends Writ
             LOG.debug("The path [" + paths[i + start] +
                 "] is being parked for HiveInputFormat.getSplits");
           }
-          nonCombinablePathIndices.add(i);
+          nonCombinablePathIndices.add(i + start);
         }
       }
       return nonCombinablePathIndices;
