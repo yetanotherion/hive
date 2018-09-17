@@ -32,6 +32,7 @@ public class SQLOperationDisplay {
   public final String executionEngine;
   public final long beginTime;
   public final String operationId;
+  private final String sessionId;
   public Long runtime;  //tracks only running portion of the query.
 
   public Long endTime;
@@ -44,6 +45,7 @@ public class SQLOperationDisplay {
     this.executionEngine = sqlOperation.getConfigForOperation().getVar(HiveConf.ConfVars.HIVE_EXECUTION_ENGINE);
     this.beginTime = System.currentTimeMillis();
     this.operationId = sqlOperation.getHandle().getHandleIdentifier().toString();
+    this.sessionId = sqlOperation.getParentSession().getSessionHandle().getSessionId().toString();
   }
 
   public synchronized long getElapsedTime() {
@@ -104,5 +106,9 @@ public class SQLOperationDisplay {
 
   public synchronized Long getRuntime() {
     return runtime;
+  }
+
+  public String getSessionId() {
+      return sessionId;
   }
 }
