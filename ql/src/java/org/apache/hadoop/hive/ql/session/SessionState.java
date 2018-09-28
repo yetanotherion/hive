@@ -19,6 +19,7 @@
 package org.apache.hadoop.hive.ql.session;
 import static org.apache.hadoop.hive.metastore.MetaStoreUtils.DEFAULT_DATABASE_NAME;
 
+import com.jcraft.jsch.Session;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1215,11 +1216,14 @@ public class SessionState {
     }
 
     if (reloadedAuxJars != null && !reloadedAuxJars.isEmpty()) {
+      Configuration hconf = SessionState.get().getConf();
+      File localTmpDir = new File(HiveConf.getVar(hconf, ConfVars.DOWNLOADED_RESOURCES_DIR));
+
       URLClassLoader currentCLoader =
           (URLClassLoader) SessionState.get().getConf().getClassLoader();
       currentCLoader =
           (URLClassLoader) Utilities.addToClassPath(currentCLoader,
-              reloadedAuxJars.toArray(new String[0]));
+              reloadedAuxJars.toArray(new String[0]), hconf, localTmpDir);
       sessionConf.setClassLoader(currentCLoader);
       Thread.currentThread().setContextClassLoader(currentCLoader);
     }
