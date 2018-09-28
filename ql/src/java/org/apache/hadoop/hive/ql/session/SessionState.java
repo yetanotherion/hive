@@ -101,6 +101,7 @@ import com.google.common.collect.Maps;
  * from any point in the code to interact with the user and to retrieve
  * configuration information
  */
+@SuppressWarnings("ALL")
 public class SessionState {
   private static final Logger LOG = LoggerFactory.getLogger(SessionState.class);
 
@@ -1178,11 +1179,12 @@ public class SessionState {
   public void loadAuxJars() throws IOException {
     String[] jarPaths = StringUtils.split(sessionConf.getAuxJars(), ',');
     if (ArrayUtils.isEmpty(jarPaths)) return;
-
+    Configuration hconf = SessionState.get().getConf();
+    File localTmpDir = new File(HiveConf.getVar(hconf, ConfVars.DOWNLOADED_RESOURCES_DIR));
     URLClassLoader currentCLoader =
-        (URLClassLoader) SessionState.get().getConf().getClassLoader();
+        (URLClassLoader) hconf.getClassLoader();
     currentCLoader =
-        (URLClassLoader) Utilities.addToClassPath(currentCLoader, jarPaths);
+        (URLClassLoader) Utilities.addToClassPath(currentCLoader, jarPaths, SessionState.get().getConf(), localTmpDir);
     sessionConf.setClassLoader(currentCLoader);
     Thread.currentThread().setContextClassLoader(currentCLoader);
   }
