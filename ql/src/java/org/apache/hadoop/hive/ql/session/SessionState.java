@@ -19,7 +19,6 @@
 package org.apache.hadoop.hive.ql.session;
 import static org.apache.hadoop.hive.metastore.MetaStoreUtils.DEFAULT_DATABASE_NAME;
 
-import com.jcraft.jsch.Session;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -102,7 +101,6 @@ import com.google.common.collect.Maps;
  * from any point in the code to interact with the user and to retrieve
  * configuration information
  */
-@SuppressWarnings("ALL")
 public class SessionState {
   private static final Logger LOG = LoggerFactory.getLogger(SessionState.class);
 
@@ -1180,12 +1178,11 @@ public class SessionState {
   public void loadAuxJars() throws IOException {
     String[] jarPaths = StringUtils.split(sessionConf.getAuxJars(), ',');
     if (ArrayUtils.isEmpty(jarPaths)) return;
-    Configuration hconf = SessionState.get().getConf();
-    File localTmpDir = new File(HiveConf.getVar(hconf, ConfVars.DOWNLOADED_RESOURCES_DIR));
+
     URLClassLoader currentCLoader =
-        (URLClassLoader) hconf.getClassLoader();
+        (URLClassLoader) SessionState.get().getConf().getClassLoader();
     currentCLoader =
-        (URLClassLoader) Utilities.addToClassPath(currentCLoader, jarPaths, SessionState.get().getConf(), localTmpDir);
+        (URLClassLoader) Utilities.addToClassPath(currentCLoader, jarPaths);
     sessionConf.setClassLoader(currentCLoader);
     Thread.currentThread().setContextClassLoader(currentCLoader);
   }
@@ -1216,14 +1213,11 @@ public class SessionState {
     }
 
     if (reloadedAuxJars != null && !reloadedAuxJars.isEmpty()) {
-      Configuration hconf = SessionState.get().getConf();
-      File localTmpDir = new File(HiveConf.getVar(hconf, ConfVars.DOWNLOADED_RESOURCES_DIR));
-
       URLClassLoader currentCLoader =
           (URLClassLoader) SessionState.get().getConf().getClassLoader();
       currentCLoader =
           (URLClassLoader) Utilities.addToClassPath(currentCLoader,
-              reloadedAuxJars.toArray(new String[0]), hconf, localTmpDir);
+              reloadedAuxJars.toArray(new String[0]));
       sessionConf.setClassLoader(currentCLoader);
       Thread.currentThread().setContextClassLoader(currentCLoader);
     }

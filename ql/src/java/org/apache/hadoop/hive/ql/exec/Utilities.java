@@ -24,7 +24,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.jcraft.jsch.Session;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.WordUtils;
@@ -208,7 +207,7 @@ import java.util.zip.InflaterInputStream;
  */
 @SuppressWarnings("nls")
 public final class Utilities {
-  private static final Map<String, Long> downloadedFiles = new ConcurrentHashMap<>();
+
   /**
    * The object in the reducer are composed of these top level fields.
    */
@@ -1775,43 +1774,11 @@ public final class Utilities {
    * @param onestr  path string
    * @return
    */
-  private static URL  urlFromPathString(String onestr) {
-    return urlFromPathString(onestr, null, null);
-  }
-
-  /**
-   * Create a URL from a string representing a path to a local file.
-   * The path string can be just a path, or can start with file:/, file:///
-   * @param onestr  path string
-   * @param conf  Configuration
-   * @param localTmpDir Directory for downloaded resources
-   * @return
-   */
-  private static URL  urlFromPathString(String onestr, Configuration conf, File localTmpDir) {
+  private static URL urlFromPathString(String onestr) {
     URL oneurl = null;
     try {
       if (StringUtils.indexOf(onestr, "file:/") == 0) {
         oneurl = new URL(onestr);
-      }else if (StringUtils.indexOf(onestr, "hdfs:/") == 0) {
-        // TODO(a.mazurov): check that conf and localTmpDir not null
-        Path remoteFile = new Path(onestr);
-        Path localFile =
-            new Path(localTmpDir.getAbsolutePath() + File.separator + remoteFile.getName());
-        Long currentTS = downloadedFiles.get(onestr);
-        if (currentTS == null) {
-          currentTS = -1L;
-        }
-
-        if (!new File(localFile.toString()).exists()) {
-          FileSystem remoteFS = remoteFile.getFileSystem(conf);
-          Long timeStamp = remoteFS.getFileStatus(remoteFile).getModificationTime();
-          if (currentTS < timeStamp) {
-            LOG.info("Copying " + remoteFile + " to " + localFile);
-            remoteFS.copyToLocalFile(remoteFile, localFile);
-            downloadedFiles.put(onestr, timeStamp);
-          }
-        }
-        oneurl = new File(localFile.toString()).toURL();
       } else {
         oneurl = new File(onestr).toURL();
       }
@@ -1841,37 +1808,23 @@ public final class Utilities {
    *          Array of classpath elements
    */
   public static ClassLoader addToClassPath(ClassLoader cloader, String[] newPaths) {
-    return addToClassPath(cloader, newPaths, null, null);
-  }
-
-  /**
-   * Add new elements to the classpath.
-   *
-   * @param newPaths
-   *          Array of classpath elements
-   */
-  public static ClassLoader addToClassPath(ClassLoader cloader, String[] newPaths, Configuration hconf, File localTmpDir) {
     final URLClassLoader loader = (URLClassLoader) cloader;
     if (useExistingClassLoader(cloader)) {
       final UDFClassLoader udfClassLoader = (UDFClassLoader) loader;
       for (String path : newPaths) {
-        udfClassLoader.addURL(urlFromPathString(path, hconf, localTmpDir));
+        udfClassLoader.addURL(urlFromPathString(path));
       }
       return udfClassLoader;
     } else {
-      return createUDFClassLoader(loader, newPaths, hconf, localTmpDir);
+      return createUDFClassLoader(loader, newPaths);
     }
   }
 
   public static ClassLoader createUDFClassLoader(URLClassLoader loader, String[] newPaths) {
-    return createUDFClassLoader(loader, newPaths, null, null);
-  }
-
-  public static ClassLoader createUDFClassLoader(URLClassLoader loader, String[] newPaths, Configuration hconf, File localTmpDir) {
     final Set<URL> curPathsSet = Sets.newHashSet(loader.getURLs());
     final List<URL> curPaths = Lists.newArrayList(curPathsSet);
     for (String onestr : newPaths) {
-      final URL oneurl = urlFromPathString(onestr, hconf, localTmpDir);
+      final URL oneurl = urlFromPathString(onestr);
       if (oneurl != null && !curPathsSet.contains(oneurl)) {
         curPaths.add(oneurl);
       }
