@@ -172,6 +172,9 @@ public class SQLOperation extends ExecuteStatementOperation {
       }
 
       sqlOpDisplay.setQueryDisplay(driver.getQueryDisplay());
+      if (operationLog != null) {
+        queryInfo.setOperationLogLocation(operationLog.toString());
+      }
       // In Hive server mode, we are not able to retry in the FetchTask
       // case, when calling fetch queries since execute() has returned.
       // For now, we disable the test attempts.
