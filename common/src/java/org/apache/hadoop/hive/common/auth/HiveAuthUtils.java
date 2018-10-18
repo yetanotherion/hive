@@ -75,7 +75,7 @@ public class HiveAuthUtils {
     return new TSocket(sslSocket);
   }
 
-  public static TServerSocket getServerSocket(String hiveHost, int portNum)
+  public static TServerSocket getServerSocket(String hiveHost, int portNum, int clientTimeout)
     throws TTransportException {
     InetSocketAddress serverAddress;
     if (hiveHost == null || hiveHost.isEmpty()) {
@@ -84,11 +84,11 @@ public class HiveAuthUtils {
     } else {
       serverAddress = new InetSocketAddress(hiveHost, portNum);
     }
-    return new TServerSocket(serverAddress);
+    return new TServerSocket(serverAddress, clientTimeout);
   }
 
   public static TServerSocket getServerSSLSocket(String hiveHost, int portNum, String keyStorePath,
-      String keyStorePassWord, List<String> sslVersionBlacklist) throws TTransportException,
+      String keyStorePassWord, List<String> sslVersionBlacklist, int clientTimeout) throws TTransportException,
       UnknownHostException {
     TSSLTransportFactory.TSSLTransportParameters params =
         new TSSLTransportFactory.TSSLTransportParameters();
@@ -101,7 +101,7 @@ public class HiveAuthUtils {
       serverAddress = new InetSocketAddress(hiveHost, portNum);
     }
     TServerSocket thriftServerSocket =
-        TSSLTransportFactory.getServerSocket(portNum, 0, serverAddress.getAddress(), params);
+        TSSLTransportFactory.getServerSocket(portNum, clientTimeout, serverAddress.getAddress(), params);
     if (thriftServerSocket.getServerSocket() instanceof SSLServerSocket) {
       List<String> sslVersionBlacklistLocal = new ArrayList<String>();
       for (String sslVersion : sslVersionBlacklist) {

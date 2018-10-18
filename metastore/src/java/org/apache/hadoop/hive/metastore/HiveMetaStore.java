@@ -7123,6 +7123,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       boolean useCompactProtocol = conf.getBoolVar(ConfVars.METASTORE_USE_THRIFT_COMPACT_PROTOCOL);
       boolean useSSL = conf.getBoolVar(ConfVars.HIVE_METASTORE_USE_SSL);
       useSasl = conf.getBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL);
+      int clientTimeout = (int) conf.getTimeVar(ConfVars.METASTORE_THRIFT_SOCKET_TIMEOUT, TimeUnit.MILLISECONDS);
 
       TProcessor processor;
       TTransportFactory transFactory;
@@ -7157,7 +7158,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
                 MetaStoreUtils.getMetaStoreSaslProperties(conf));
         processor = saslServer.wrapProcessor(
           new ThriftHiveMetastore.Processor<IHMSHandler>(handler));
-        serverSocket = HiveAuthUtils.getServerSocket(null, port);
+        serverSocket = HiveAuthUtils.getServerSocket(null, port, clientTimeout);
 
         LOG.info("Starting DB backed MetaStore Server in Secure Mode");
       } else {
@@ -7183,7 +7184,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           sslVersionBlacklist.add(sslVersion);
         }
         if (!useSSL) {
-          serverSocket = HiveAuthUtils.getServerSocket(null, port);
+          serverSocket = HiveAuthUtils.getServerSocket(null, port, clientTimeout);
         } else {
           String keyStorePath = conf.getVar(ConfVars.HIVE_METASTORE_SSL_KEYSTORE_PATH).trim();
           if (keyStorePath.isEmpty()) {
@@ -7193,7 +7194,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           String keyStorePassword = ShimLoader.getHadoopShims().getPassword(conf,
               HiveConf.ConfVars.HIVE_METASTORE_SSL_KEYSTORE_PASSWORD.varname);
           serverSocket = HiveAuthUtils.getServerSSLSocket(null, port, keyStorePath,
-              keyStorePassword, sslVersionBlacklist);
+              keyStorePassword, sslVersionBlacklist, clientTimeout);
         }
       }
 
