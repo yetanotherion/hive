@@ -395,7 +395,7 @@ public class HiveConf extends Configuration {
     METASTORE_CLIENT_CONNECT_RETRY_DELAY("hive.metastore.client.connect.retry.delay", "1s",
         new TimeValidator(TimeUnit.SECONDS),
         "Number of seconds for the client to wait between consecutive connection attempts"),
-    METASTORE_CLIENT_SOCKET_TIMEOUT("hive.metastore.client.socket.timeout", "600s",
+    METASTORE_CLIENT_SOCKET_TIMEOUT("hive.metastore.client.socket.timeout", "5000ms",
         new TimeValidator(TimeUnit.SECONDS),
         "MetaStore Client socket timeout in seconds"),
     METASTOREPWD("javax.jdo.option.ConnectionPassword", "mine",
@@ -446,6 +446,9 @@ public class HiveConf extends Configuration {
     METASTORE_USE_THRIFT_COMPACT_PROTOCOL("hive.metastore.thrift.compact.protocol.enabled", false,
         "If true, the metastore Thrift interface will use TCompactProtocol. When false (default) TBinaryProtocol will be used.\n" +
         "Setting it to true will break compatibility with older clients running TBinaryProtocol."),
+    METASTORE_THRIFT_SOCKET_TIMEOUT("hive.metastore.thrift.socket.timeout", "5s",
+        new TimeValidator(TimeUnit.MILLISECONDS),
+        "Maximum time that Metastore server sockets wait to read message before exiting"),
     METASTORE_CLUSTER_DELEGATION_TOKEN_STORE_CLS("hive.cluster.delegation.token.store.class",
         "org.apache.hadoop.hive.thrift.MemoryTokenStore",
         "The delegation token store implementation. Set to org.apache.hadoop.hive.thrift.ZooKeeperTokenStore for load-balanced cluster."),
@@ -1829,6 +1832,9 @@ public class HiveConf extends Configuration {
     HIVE_SERVER2_LONG_POLLING_TIMEOUT("hive.server2.long.polling.timeout", "5000ms",
         new TimeValidator(TimeUnit.MILLISECONDS),
         "Time that HiveServer2 will wait before responding to asynchronous calls that use long polling"),
+    HIVE_SERVER2_THRIFT_SOCKET_TIMEOUT("hive.server2.thrift.socket.timeout", "5s",
+        new TimeValidator(TimeUnit.MILLISECONDS),
+        "Maximum time that HiveServer2 sockets wait to read message before exiting"),
 
     // HiveServer2 auth configuration
     HIVE_SERVER2_AUTHENTICATION("hive.server2.authentication", "NONE",
