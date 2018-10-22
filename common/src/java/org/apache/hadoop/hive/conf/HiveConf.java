@@ -395,7 +395,7 @@ public class HiveConf extends Configuration {
     METASTORE_CLIENT_CONNECT_RETRY_DELAY("hive.metastore.client.connect.retry.delay", "1s",
         new TimeValidator(TimeUnit.SECONDS),
         "Number of seconds for the client to wait between consecutive connection attempts"),
-    METASTORE_CLIENT_SOCKET_TIMEOUT("hive.metastore.client.socket.timeout", "5000ms",
+    METASTORE_CLIENT_SOCKET_TIMEOUT("hive.metastore.client.socket.timeout", "600s",
         new TimeValidator(TimeUnit.SECONDS),
         "MetaStore Client socket timeout in seconds"),
     METASTOREPWD("javax.jdo.option.ConnectionPassword", "mine",
