@@ -192,6 +192,7 @@ public class JoinDesc extends AbstractOperatorDesc {
     this.filters = clone.filters;
     this.filterMap = clone.filterMap;
     this.statistics = clone.statistics;
+    this.colExprMap = clone.colExprMap;
   }
 
   public Map<Byte, List<ExprNodeDesc>> getExprs() {
@@ -305,6 +306,20 @@ public class JoinDesc extends AbstractOperatorDesc {
     }
 
     return l;
+  }
+
+  @Override
+  @Explain(displayName = "columnExprMap", jsonOnly = true)
+  public Map<String, ExprNodeDesc> getColumnExprMapForExplain() {
+    if(this.reversedExprs == null) {
+      return this.colExprMap;
+    }
+    Map<String, ExprNodeDesc> explainColMap = new HashMap<>();
+    for(String col:this.colExprMap.keySet()){
+      String taggedCol = this.reversedExprs.get(col) + " " + col;
+      explainColMap.put(taggedCol, this.colExprMap.get(col));
+    }
+    return explainColMap;
   }
 
   public ExprNodeDesc [][] getJoinKeys() {

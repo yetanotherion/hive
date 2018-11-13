@@ -28,4 +28,6 @@ public interface OperatorDesc extends Serializable, Cloneable {
   public OpTraits getOpTraits();
   public void setOpTraits(OpTraits opTraits);
   public Map<String, String> getOpProps();
+  public Map<String, ExprNodeDesc> getColumnExprMap();
+  public void setColumnExprMap(Map<String, ExprNodeDesc> colExprMap);
 }

@@ -288,6 +288,7 @@ public final class GenMRSkewJoinProcessor {
       mapJoinDescriptor.setTagOrder(tags);
       mapJoinDescriptor.setHandleSkewJoin(false);
       mapJoinDescriptor.setNullSafes(joinDescriptor.getNullSafes());
+      mapJoinDescriptor.setColumnExprMap(joinDescriptor.getColumnExprMap());
 
       MapredLocalWork localPlan = new MapredLocalWork(
           new LinkedHashMap<String, Operator<? extends OperatorDesc>>(),
