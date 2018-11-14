@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.logging.Log;
 import org.apache.hadoop.hive.common.LogUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
@@ -233,8 +234,7 @@ public class HadoopJobExecHelper {
     final boolean localMode = ShimLoader.getHadoopShims().isLocalMode(job);
     Heartbeater heartbeater = new Heartbeater(th.getTxnManager(), job);
 
-    MapRedStats mapRedStats = new MapRedStats(
-            job, numMap, numReduce, cpuMsec, false, rj.getID().toString());
+    MapRedStats mapRedStats = new MapRedStats(numMap, numReduce, cpuMsec, false, rj.getID().toString());
     updateMapRedTaskWebUIStatistics(mapRedStats, rj);
 
     while (!rj.isComplete()) {

@@ -18,11 +18,13 @@ limitations under the License.
 </%doc>
 <%args>
 SQLOperationDisplay sod;
+HiveConf hiveConf;
 </%args>
 <%import>
 java.util.*;
 org.apache.hadoop.hive.ql.QueryDisplay;
 org.apache.hive.service.cli.operation.SQLOperationDisplay;
+org.apache.hadoop.hive.conf.HiveConf;
 </%import>
 <%class>
 private boolean showGraph = false;
@@ -225,9 +227,9 @@ private boolean showStats = false;
       <div class="panel-heading">Explain plan</div>
       <div class="panel-body">
         <%if showGraph %>
-          <%if queryInfo.getQueryDisplay() != null &&
-                queryInfo.getQueryDisplay().getExplainPlan() != null &&
-                !queryInfo.getQueryDisplay().getExplainPlan().equals("UNKNOWN")%>
+          <%if sod.getQueryDisplay() != null &&
+                sod.getQueryDisplay().getExplainPlan() != null &&
+                !sod.getQueryDisplay().getExplainPlan().equals("UNKNOWN")%>
             <div id='plan-visualization'></div>
             <%if showStats %>
               <div class="row">
@@ -242,17 +244,19 @@ private boolean showStats = false;
               <pre id='stage-info'></pre>
             </%if>
             <script type="text/javascript">
-              var jsonPlan = <% queryInfo.getQueryDisplay().getExplainPlan() %>
+              var jsonPlan = <% sod.getQueryDisplay().getExplainPlan() %>
               var jsonStatuses = {};
               var jsonStatistics = {};
               var jsonLogs = {};
-              <%if queryInfo.getOperationLogLocation() != null %>
-                jsonLogs["Operation Log - will be deleted after query completes"] = "<% queryInfo.getOperationLogLocation() %>"
+              <%doc>
+              <%if sod.getOperationLogLocation() != null %>
+                jsonLogs["Operation Log - will be deleted after query completes"] = "<% sod.getOperationLogLocation() %>"
               </%if>
-              <%if queryInfo.getQueryDisplay().getFullLogLocation() != null %>
-                jsonLogs["Full Log"] = "<% queryInfo.getQueryDisplay().getFullLogLocation() %>"
+              </%doc>
+              <%if sod.getQueryDisplay().getFullLogLocation() != null %>
+                jsonLogs["Full Log"] = "<% sod.getQueryDisplay().getFullLogLocation() %>"
               </%if>
-              <%for QueryDisplay.TaskDisplay taskDisplay : queryInfo.getQueryDisplay().getTaskDisplays() %>
+              <%for QueryDisplay.TaskDisplay taskDisplay : sod.getQueryDisplay().getTaskDisplays() %>
                 jsonStatuses["<% taskDisplay.getTaskId() %>"] = "<% taskDisplay.getStatus() %>";
                 <%if showStats && taskDisplay.getStatsJsonString() != null %>
                   jsonStatistics["<% taskDisplay.getTaskId() %>"] = <% taskDisplay.getStatsJsonString() %>;
@@ -269,7 +273,7 @@ private boolean showStats = false;
         <%else>
           <%if hiveConf.getBoolVar(HiveConf.ConfVars.HIVE_SERVER2_WEBUI_EXPLAIN_OUTPUT) %>
             <pre>
-            <% queryInfo.getQueryDisplay() == null ? "Unknown" : queryInfo.getQueryDisplay().getExplainPlan() %>
+            <% sod.getQueryDisplay() == null ? "Unknown" : sod.getQueryDisplay().getExplainPlan() %>
             </pre>
           <%else>
             <pre>

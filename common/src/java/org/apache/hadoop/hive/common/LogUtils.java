@@ -30,9 +30,9 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
-import org.apache.logging.log4j.core.appender.FileAppender;
-import org.apache.logging.log4j.core.appender.RollingFileAppender;
-import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
+//import org.apache.logging.log4j.core.appender.FileAppender;
+//import org.apache.logging.log4j.core.appender.RollingFileAppender;
+//import org.apache.logging.log4j.core.appender.RollingRandomAccessFileAppender;
 
 /**
  * Utilities common to logging operations.
@@ -173,26 +173,26 @@ public class LogUtils {
     }
     return value;
   }
-  }
 
   /**
    * Get path of the log file for user to see on the WebUI.
    */
   public static String getLogFilePath() {
     String logFilePath = null;
-    org.apache.logging.log4j.Logger rootLogger = LogManager.getRootLogger();
-    if (rootLogger instanceof org.apache.logging.log4j.core.Logger) {
-      org.apache.logging.log4j.core.Logger coreLogger =
-          (org.apache.logging.log4j.core.Logger)rootLogger;
-      for (Appender appender : coreLogger.getAppenders().values()) {
-        if (appender instanceof FileAppender) {
-          logFilePath = ((FileAppender) appender).getFileName();
-        } else if (appender instanceof RollingFileAppender) {
-          logFilePath = ((RollingFileAppender) appender).getFileName();
-        } else if (appender instanceof RollingRandomAccessFileAppender) {
-          logFilePath = ((RollingRandomAccessFileAppender) appender).getFileName();
-        }
-      }
-    }
+//    org.apache.logging.log4j.Logger rootLogger = LogManager.getRootLogger();
+//    if (rootLogger instanceof org.apache.commons.logging.log4j.core.Logger) {
+//      org.apache.logging.log4j.core.Logger coreLogger =
+//          (org.apache.logging.log4j.core.Logger)rootLogger;
+//      for (Appender appender : coreLogger.getAppenders().values()) {
+//        if (appender instanceof FileAppender) {
+//          logFilePath = ((FileAppender) appender).getFileName();
+//        } else if (appender instanceof RollingFileAppender) {
+//          logFilePath = ((RollingFileAppender) appender).getFileName();
+//        } else if (appender instanceof RollingRandomAccessFileAppender) {
+//          logFilePath = ((RollingRandomAccessFileAppender) appender).getFileName();
+//        }
+//      }
+//    }
     return logFilePath;
+  }
 }

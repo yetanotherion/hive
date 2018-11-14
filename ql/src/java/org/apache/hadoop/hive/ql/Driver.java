@@ -675,8 +675,7 @@ public class Driver implements CommandProcessor {
       List<Task<?>> rootTasks = sem.getRootTasks();
       if (conf.getBoolVar(ConfVars.HIVE_SERVER2_WEBUI_SHOW_GRAPH)) {
         JSONObject jsonPlan = task.getJSONPlan(
-            null, rootTasks, sem.getFetchTask(), true, true, true, sem.getCboInfo(),
-            plan.getOptimizedQueryString());
+            null, astStringTree, rootTasks, sem.getFetchTask(), true, true, true);
         if (jsonPlan.getJSONObject(ExplainTask.STAGE_DEPENDENCIES) != null &&
             jsonPlan.getJSONObject(ExplainTask.STAGE_DEPENDENCIES).length() <=
                 conf.getIntVar(ConfVars.HIVE_SERVER2_WEBUI_MAX_GRAPH_SIZE)) {
@@ -685,8 +684,7 @@ public class Driver implements CommandProcessor {
           ret = null;
         }
       } else {
-        task.getJSONPlan(ps, rootTasks, sem.getFetchTask(), false, true, true, sem.getCboInfo(),
-            plan.getOptimizedQueryString());
+        task.getJSONPlan(ps, astStringTree, rootTasks, sem.getFetchTask(), false, true, true);
         ret = baos.toString();
       }
     } catch (Exception e) {

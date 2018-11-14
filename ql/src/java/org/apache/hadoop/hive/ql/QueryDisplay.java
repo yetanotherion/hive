@@ -126,12 +126,12 @@ public class QueryDisplay {
     }
     @JsonIgnore
     public synchronized String getStatus() {
-      if (returnVal == null) {
+      if (returnValue == null) {
         return "Running";
-      } else if (returnVal == 0) {
+      } else if (returnValue == 0) {
         return "Success, ReturnVal 0";
       } else {
-        return "Failure, ReturnVal " + String.valueOf(returnVal);
+        return "Failure, ReturnVal " + String.valueOf(returnValue);
       }
     }
 
@@ -198,7 +198,7 @@ public class QueryDisplay {
     }
 
     public synchronized Integer getReturnValue() {
-      return returnVal;
+      return returnValue;
     }
 
     public synchronized String getErrorMsg() {
@@ -252,7 +252,7 @@ public class QueryDisplay {
   public synchronized void setTaskResult(String taskId, TaskResult result) {
     TaskDisplay taskDisplay = tasks.get(taskId);
     if (taskDisplay != null) {
-      taskDisplay.returnVal = result.getExitVal();
+      taskDisplay.returnValue = result.getExitVal();
       if (result.getTaskError() != null) {
         taskDisplay.errorMsg = result.getTaskError().toString();
       }
