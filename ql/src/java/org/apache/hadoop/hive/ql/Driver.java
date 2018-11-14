@@ -126,6 +126,7 @@ import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.mapred.ClusterStatus;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
+import org.json.JSONObject;
 
 public class Driver implements CommandProcessor {
 
@@ -672,8 +673,20 @@ public class Driver implements CommandProcessor {
     PrintStream ps = new PrintStream(baos);
     try {
       List<Task<?>> rootTasks = sem.getRootTasks();
-      task.getJSONPlan(ps, astStringTree, rootTasks, sem.getFetchTask(), false, true, true);
-      ret = baos.toString();
+      if (conf.getBoolVar(ConfVars.HIVE_SERVER2_WEBUI_SHOW_GRAPH)) {
+        JSONObject jsonPlan = task.getJSONPlan(
+            null, astStringTree, rootTasks, sem.getFetchTask(), true, true, true);
+        if (jsonPlan.getJSONObject(ExplainTask.STAGE_DEPENDENCIES) != null &&
+            jsonPlan.getJSONObject(ExplainTask.STAGE_DEPENDENCIES).length() <=
+                conf.getIntVar(ConfVars.HIVE_SERVER2_WEBUI_MAX_GRAPH_SIZE)) {
+          ret = jsonPlan.toString();
+        } else {
+          ret = null;
+        }
+      } else {
+        task.getJSONPlan(ps, astStringTree, rootTasks, sem.getFetchTask(), false, true, true);
+        ret = baos.toString();
+      }
     } catch (Exception e) {
       LOG.warn("Exception generating explain output: " + e, e);
     }
