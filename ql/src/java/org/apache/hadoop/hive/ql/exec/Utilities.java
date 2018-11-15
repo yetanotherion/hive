@@ -1190,7 +1190,7 @@ public final class Utilities {
       kryo.register(Path.class, new PathSerializer());
       kryo.register( Arrays.asList( "" ).getClass(), new ArraysAsListSerializer() );
       kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
-      removeField(kryo, Operator.class, "colExprMap");
+      removeField(kryo, AbstractOperatorDesc.class, "colExprMap");
       kryo.register(MapWork.class);
       kryo.register(ReduceWork.class);
       kryo.register(TableDesc.class);
@@ -1255,7 +1255,7 @@ public final class Utilities {
       kryo.register(Path.class, new PathSerializer());
       kryo.register( Arrays.asList( "" ).getClass(), new ArraysAsListSerializer() );
       kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
-      removeField(kryo, Operator.class, "colExprMap");
+      removeField(kryo, AbstractOperatorDesc.class, "colExprMap");
       kryo.register(MapWork.class);
       kryo.register(ReduceWork.class);
       kryo.register(TableDesc.class);
