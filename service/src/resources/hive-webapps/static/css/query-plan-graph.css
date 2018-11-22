@@ -15,26 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.apache.hadoop.hive.ql.plan;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-/**
- * Explain.
- *
- */
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Explain {
-  String displayName() default "";
-
-  boolean normalExplain() default true;
-
-  boolean displayOnlyOnTrue() default false;
-
-  boolean skipHeader() default false;
-
-  boolean jsonOnly() default false;
-
-}
+#plan-visualization {
+  width: 100%;
+  min-height: 300px;
+  border: 1px solid grey;
+  }

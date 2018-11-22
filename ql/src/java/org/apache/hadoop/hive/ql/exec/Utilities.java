@@ -149,6 +149,7 @@ import org.apache.hadoop.hive.ql.metadata.InputEstimator;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
+import org.apache.hadoop.hive.ql.plan.AbstractOperatorDesc;
 import org.apache.hadoop.hive.ql.plan.BaseWork;
 import org.apache.hadoop.hive.ql.plan.DynamicPartitionCtx;
 import org.apache.hadoop.hive.ql.plan.ExprNodeGenericFuncDesc;
@@ -1189,7 +1190,7 @@ public final class Utilities {
       kryo.register(Path.class, new PathSerializer());
       kryo.register( Arrays.asList( "" ).getClass(), new ArraysAsListSerializer() );
       kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
-      removeField(kryo, Operator.class, "colExprMap");
+      removeField(kryo, AbstractOperatorDesc.class, "colExprMap");
       kryo.register(MapWork.class);
       kryo.register(ReduceWork.class);
       kryo.register(TableDesc.class);
@@ -1222,7 +1223,7 @@ public final class Utilities {
       kryo.register(Path.class, new PathSerializer());
       kryo.register( Arrays.asList( "" ).getClass(), new ArraysAsListSerializer() );
       kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
-      removeField(kryo, Operator.class, "colExprMap");
+      removeField(kryo, AbstractOperatorDesc.class, "colExprMap");
       removeField(kryo, ColumnInfo.class, "objectInspector");
       kryo.register(SparkEdgeProperty.class);
       kryo.register(MapWork.class);
@@ -1254,7 +1255,7 @@ public final class Utilities {
       kryo.register(Path.class, new PathSerializer());
       kryo.register( Arrays.asList( "" ).getClass(), new ArraysAsListSerializer() );
       kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
-      removeField(kryo, Operator.class, "colExprMap");
+      removeField(kryo, AbstractOperatorDesc.class, "colExprMap");
       kryo.register(MapWork.class);
       kryo.register(ReduceWork.class);
       kryo.register(TableDesc.class);

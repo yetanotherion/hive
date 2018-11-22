@@ -246,6 +246,7 @@ public class GenSparkSkewJoinProcessor {
       mapJoinDescriptor.setTagOrder(tags);
       mapJoinDescriptor.setHandleSkewJoin(false);
       mapJoinDescriptor.setNullSafes(joinDescriptor.getNullSafes());
+      mapJoinDescriptor.setColumnExprMap(joinDescriptor.getColumnExprMap());
       // temporarily, mark it as child of all the TS
       MapJoinOperator mapJoinOp = (MapJoinOperator) OperatorFactory
           .getAndMakeChild(mapJoinDescriptor, null, parentOps);

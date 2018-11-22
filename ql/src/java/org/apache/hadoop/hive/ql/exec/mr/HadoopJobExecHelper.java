@@ -32,11 +32,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
+import org.apache.hadoop.hive.common.LogUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
+import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.MapRedStats;
 import org.apache.hadoop.hive.ql.exec.Heartbeater;
 import org.apache.hadoop.hive.ql.exec.Operator;
@@ -60,8 +62,6 @@ import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.TaskCompletionEvent;
 import org.apache.hadoop.mapred.TaskReport;
 import org.apache.log4j.Appender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.LogManager;
 
 public class HadoopJobExecHelper {
 
@@ -234,6 +234,9 @@ public class HadoopJobExecHelper {
     final boolean localMode = ShimLoader.getHadoopShims().isLocalMode(job);
     Heartbeater heartbeater = new Heartbeater(th.getTxnManager(), job);
 
+    MapRedStats mapRedStats = new MapRedStats(numMap, numReduce, cpuMsec, false, rj.getID().toString());
+    updateMapRedTaskWebUIStatistics(mapRedStats, rj);
+
     while (!rj.isComplete()) {
       try {
         Thread.sleep(pullInterval);
@@ -306,6 +309,11 @@ public class HadoopJobExecHelper {
       }
 
       Counters ctrs = th.getCounters();
+
+      mapRedStats.setCounters(ctrs);
+      mapRedStats.setNumMap(numMap);
+      mapRedStats.setNumReduce(numReduce);
+      updateMapRedTaskWebUIStatistics(mapRedStats, rj);
 
       if (fatal = checkFatalErrors(ctrs, errMsg)) {
         console.printError("[Fatal Error] " + errMsg.toString() + ". Killing the job.");
@@ -412,8 +420,10 @@ public class HadoopJobExecHelper {
       }
     }
 
-    MapRedStats mapRedStats = new MapRedStats(numMap, numReduce, cpuMsec, success, rj.getID().toString());
+    mapRedStats.setSuccess(success);
     mapRedStats.setCounters(ctrs);
+    mapRedStats.setCpuMSec(cpuMsec);
+    updateMapRedTaskWebUIStatistics(mapRedStats, rj);
 
     // update based on the final value of the counters
     updateCounters(ctrs, rj);
@@ -424,6 +434,12 @@ public class HadoopJobExecHelper {
     }
     // LOG.info(queryPlan);
     return mapRedStats;
+  }
+
+  private void updateMapRedTaskWebUIStatistics(MapRedStats mapRedStats, RunningJob rj) {
+    if (task instanceof MapRedTask) {
+      ((MapRedTask) task).updateWebUiStats(mapRedStats, rj);
+    }
   }
 
 
@@ -494,13 +510,7 @@ public class HadoopJobExecHelper {
     sb.append("Task ID:\n  " + taskId + "\n\n");
     sb.append("Logs:\n");
     console.printError(sb.toString());
-
-    for (Appender a : Collections.list((Enumeration<Appender>)
-          LogManager.getRootLogger().getAllAppenders())) {
-      if (a instanceof FileAppender) {
-        console.printError((new Path(((FileAppender)a).getFile())).toUri().getPath());
-      }
-    }
+    console.printError(LogUtils.getLogFilePath());
   }
 
   public int progressLocal(Process runningJob, String taskId) {
