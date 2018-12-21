@@ -57,6 +57,7 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.OperationLog;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.hive.ql.session.SessionStream;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
@@ -127,9 +128,9 @@ public class SQLOperation extends ExecuteStatementOperation {
   private void setupSessionIO(SessionState sessionState) {
     try {
       sessionState.in = null; // hive server's session input stream is not used
-      sessionState.out = new PrintStream(System.out, true, CharEncoding.UTF_8);
-      sessionState.info = new PrintStream(System.err, true, CharEncoding.UTF_8);
-      sessionState.err = new PrintStream(System.err, true, CharEncoding.UTF_8);
+      sessionState.out = new SessionStream(System.out, true, CharEncoding.UTF_8);
+      sessionState.info = new SessionStream(System.err, true, CharEncoding.UTF_8);
+      sessionState.err = new SessionStream(System.err, true, CharEncoding.UTF_8);
     } catch (UnsupportedEncodingException e) {
         LOG.error("Error creating PrintStream", e);
         e.printStackTrace();

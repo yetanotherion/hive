@@ -35,6 +35,7 @@ import org.apache.hadoop.hive.metastore.api.Schema;
 import org.apache.hadoop.hive.ql.processors.CommandProcessor;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.hive.ql.session.SessionStream;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
@@ -50,7 +51,6 @@ import org.apache.hive.service.cli.session.HiveSession;
 public class HiveCommandOperation extends ExecuteStatementOperation {
   private CommandProcessor commandProcessor;
   private TableSchema resultSchema = null;
-  private boolean closeSessionStreams = true; // Only close file based streams, not System.out and System.err.
 
   /**
    * For processors other than Hive queries (Driver), they output to session.out (a temp file)
@@ -72,20 +72,19 @@ public class HiveCommandOperation extends ExecuteStatementOperation {
       sessionState.in = null; // hive server's session input stream is not used
       // open a per-session file in auto-flush mode for writing temp results and tmp error output
       sessionState.out =
-          new PrintStream(new FileOutputStream(sessionState.getTmpOutputFile()), true, CharEncoding.UTF_8);
+          new SessionStream(new FileOutputStream(sessionState.getTmpOutputFile()), true, CharEncoding.UTF_8);
       sessionState.err =
-          new PrintStream(new FileOutputStream(sessionState.getTmpErrOutputFile()), true,CharEncoding.UTF_8);
+          new SessionStream(new FileOutputStream(sessionState.getTmpErrOutputFile()), true,CharEncoding.UTF_8);
     } catch (IOException e) {
       LOG.error("Error in creating temp output file ", e);
 
       // Close file streams to avoid resource leaking
-      IOUtils.cleanup(LOG, parentSession.getSessionState().out, parentSession.getSessionState().err);
-      closeSessionStreams = false;
+      tearDownSessionIO();
 
       try {
         sessionState.in = null;
-        sessionState.out = new PrintStream(System.out, true, CharEncoding.UTF_8);
-        sessionState.err = new PrintStream(System.err, true, CharEncoding.UTF_8);
+        sessionState.out = new SessionStream(System.out, true, CharEncoding.UTF_8);
+        sessionState.err = new SessionStream(System.err, true, CharEncoding.UTF_8);
       } catch (UnsupportedEncodingException ee) {
         LOG.error("Error creating PrintStream", e);
         ee.printStackTrace();
@@ -97,9 +96,7 @@ public class HiveCommandOperation extends ExecuteStatementOperation {
 
 
   private void tearDownSessionIO() {
-    if (closeSessionStreams) {
-      IOUtils.cleanup(LOG, parentSession.getSessionState().out, parentSession.getSessionState().err);
-    }
+    IOUtils.cleanup(LOG, parentSession.getSessionState().out, parentSession.getSessionState().err);
   }
 
   @Override
