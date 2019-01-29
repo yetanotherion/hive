@@ -818,7 +818,7 @@ public class HiveConf extends Configuration {
         "org.apache.hadoop.hive.ql.io.orc.OrcSerde,org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe," +
         "org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe,org.apache.hadoop.hive.serde2.dynamic_type.DynamicSerDe," +
         "org.apache.hadoop.hive.serde2.MetadataTypedColumnsetSerDe,org.apache.hadoop.hive.serde2.columnar.LazyBinaryColumnarSerDe," +
-        "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe,org.apache.hadoop.hive.serde2.lazybinary.LazyBinarySerDe",
+        "org.apache.hadoop.hive.serde2.lazybinary.LazyBinarySerDe",
         "SerDes retriving schema from metastore. This an internal parameter. Check with the hive dev. team"),
 
     HIVEHISTORYFILELOC("hive.querylog.location",
