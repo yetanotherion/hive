@@ -760,6 +760,8 @@ public class Hive {
       if (tbl.getDbName() == null || "".equals(tbl.getDbName().trim())) {
         tbl.setDbName(SessionState.get().getCurrentDatabase());
       }
+
+      setTableLocInTableProperties(tbl);
       if (tbl.getCols().size() == 0 || tbl.getSd().getColsSize() == 0) {
         tbl.setFields(MetaStoreUtils.getFieldsFromDeserializer(tbl.getTableName(),
             tbl.getDeserializer()));
@@ -787,6 +789,30 @@ public class Hive {
       }
     } catch (Exception e) {
       throw new HiveException(e);
+    }
+  }
+
+  private void setTableLocInTableProperties(Table tbl) throws TException {
+    tbl.getTTable().getSd().setLocation(getTablePath(tbl));
+  }
+
+  private String getTablePath(Table table) throws TException {
+    Warehouse wh = new Warehouse(conf);
+    Path tablePath;
+
+    final String location = table.getSd().getLocation();
+    if ((location == null || location.isEmpty())) {
+      tablePath = wh.getTablePath(
+          getMSC().getDatabase(table.getDbName()), table.getTableName());
+    } else {
+      tablePath = wh.getDnsPath(new Path(location));
+    }
+
+    if (tablePath != null) {
+      LOG.info("Table path is: " + tablePath);
+      return tablePath.toString();
+    } else {
+      return null;
     }
   }
 
